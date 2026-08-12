@@ -357,6 +357,19 @@
   .newbest{color:var(--gold); font-weight:900}
   .hint{color:var(--dim); font-size:.78rem; line-height:1.45}
 
+  /* Sichtbare Erklärung, wenn kein JavaScript läuft – etwa in der Vorschau der
+     iOS-Dateien-App oder in der Schnellansicht. Sonst erscheint die Seite
+     vollständig, reagiert aber auf keinen Knopf. */
+  .noscript{
+    position:fixed; inset:0; z-index:100; background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:12px; text-align:center; padding:24px; overflow-y:auto;
+  }
+  .noscript h2{margin:0; font-size:1.3rem; color:var(--gold)}
+  .noscript p{margin:0; max-width:34ch; font-size:.95rem; line-height:1.5; color:var(--ink)}
+  .noscript b{color:var(--gold)}
+  .noscript .em{font-size:2.6rem}
+
   @media (max-height:600px){
     .title{font-size:2rem} .hat{width:64px}
     .opt{min-height:56px} .badge{width:74px;height:74px;font-size:2rem}
@@ -372,6 +385,19 @@
   <div class="floor"><div class="tiles" id="tiles"></div></div>
   <div class="glitter" id="glitter"></div>
 </div>
+
+<noscript>
+  <div class="noscript">
+    <div class="em">🎩</div>
+    <h2>Hier fehlt JavaScript</h2>
+    <p>Das Spiel läuft mit JavaScript – und dieses Fenster führt keines aus.
+    Die Seite erscheint deshalb, lässt sich aber nicht bedienen.</p>
+    <p>Das passiert in der <b>Vorschau der Dateien-App</b> und in der
+    <b>Schnellansicht</b> von iOS. Ein Fehler im Spiel ist es nicht.</p>
+    <p>So funktioniert es: die <b>Web-Adresse</b> des Spiels in <b>Safari</b> öffnen –
+    oder die Datei am <b>Mac</b> per Doppelklick in Safari starten.</p>
+  </div>
+</noscript>
 
 <div class="toast" id="toast" aria-hidden="true"></div>
 <div class="party" id="party" aria-hidden="true"></div>
