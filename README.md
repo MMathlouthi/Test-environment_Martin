@@ -26,13 +26,14 @@ und ob etwas im Internet liegt.
 | Offline spielbar | ✅ sofort | ✅ sofort | ✅ nach dem ersten Laden |
 | Vollbild ohne Browser-Leisten | teilweise | ❌ nein | ✅ ja |
 | Einrichtung | einmalig 2 Minuten | keine | GitHub-Einstellungen |
+| Von mir getestet | ❌ iOS-Weg, hier nicht prüfbar | ✅ ja | ✅ ja |
 
 > **Warum bietet Safari kein Icon für die Datei an?** „Zum Home-Bildschirm" gibt es nur
 > für **Web-Adressen** (`http`/`https`), nicht für lokale Dateien (`file://`) — dieselbe
 > Einschränkung wie bei `data:`-Adressen. Das ist iOS, kein Fehler des Spiels.
 > Deshalb führt der private Weg zum Icon über die Kurzbefehle-App.
 
-### A) Privat mit Icon, über einen Kurzbefehl (empfohlen)
+### A) Privat mit Icon, über einen Kurzbefehl
 
 Zuerst die Datei aufs iPhone bringen: `layla-zahlenheld.html` per **AirDrop** senden und
 in **Dateien** an einem festen Ort ablegen, zum Beispiel *Auf meinem iPhone → Downloads*.
@@ -42,17 +43,28 @@ Dann in der App **Kurzbefehle**:
 1. **+** oben rechts → **Aktion hinzufügen**.
 2. Nach **„Datei abrufen"** suchen und hinzufügen. Auf **Datei** tippen und
    `layla-zahlenheld.html` auswählen. *„Nachfragen"* muss dabei **aus** sein.
-3. Nach **„Vorschau anzeigen"** (Quick Look) suchen und als zweite Aktion hinzufügen.
-4. Oben auf den Namen tippen → **Umbenennen** zu *Zahlenheld*, gern auch
-   **Symbol wählen** (Hut oder Stern).
-5. Wieder oben auf den Namen → **Zum Home-Bildschirm hinzufügen**.
+3. Als **zweite und letzte** Aktion nach **„Schnellansicht"** suchen und hinzufügen.
+   Das ist die deutsche Bezeichnung für Quick Look – sie zeigt die Datei an.
+4. Falls eine **„Teilen"**-Aktion im Kurzbefehl steht: **löschen**. Sie ist der Grund,
+   wenn beim Antippen nur das Teilen-Menü mit Kontakten und Apps erscheint statt des
+   Spiels.
+5. Oben auf den Namen tippen → **Umbenennen** zu *Zahlenheld*, gern **Symbol wählen**.
+6. Wieder oben auf den Namen → **Zum Home-Bildschirm hinzufügen**.
 
-Fertig: ein Icon auf dem Home-Bildschirm, das das Spiel direkt öffnet – ohne Internet,
-ohne dass irgendetwas das Gerät verlässt. Als Icon-Bild kann `docs/icon-180.png`
-verwendet werden (per AirDrop in die Fotos legen und im Kurzbefehl auswählen).
+Als Icon-Bild lässt sich `docs/icon-180.png` verwenden: per AirDrop in die Fotos legen
+und im Kurzbefehl auswählen.
 
-> Weil die Vorschau nicht garantiert dauerhaft speichert, unbedingt den
-> **Sicherungs-Code** nutzen (siehe unten) – dann ist das Preis-Konto abgesichert.
+**Fehlersuche**
+
+| Beim Antippen erscheint … | Ursache und Abhilfe |
+|---|---|
+| das **Teilen-Menü** mit Kontakten | Die Anzeige-Aktion fehlt. „Schnellansicht" als letzte Aktion hinzufügen, „Teilen" löschen. |
+| der **HTML-Quelltext** statt des Spiels | Die Schnellansicht stellt die Datei auf diesem Gerät nicht dar. Dann Weg **B** nehmen – das Spiel selbst ist in Ordnung. |
+| eine **Frage nach der Datei** | Bei „Datei abrufen" ist *Nachfragen* noch an. Ausschalten und die Datei fest auswählen. |
+
+> Die Schnellansicht darf unter Umständen nichts dauerhaft speichern. Das Spiel erkennt
+> das und zeigt oben auf der Startseite eine Warnung. Dann unbedingt den
+> **Sicherungs-Code** nutzen (siehe unten) – damit bleibt das Preis-Konto erhalten.
 
 ### B) Privat ohne Einrichtung, über die Dateien-App
 

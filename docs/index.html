@@ -189,6 +189,12 @@
   .lb div span{margin-left:auto; color:var(--dim); font-size:.78rem; font-weight:700}
   .lb .me{color:var(--gold)}
 
+  /* Warnung, wenn der Start-Weg nichts dauerhaft speichern darf.
+     Kein display in dieser Regel – sonst wirkt das hidden-Attribut nicht. */
+  .warnbar{
+    background:rgba(255,92,122,.15); border:1.5px solid var(--bad); border-radius:14px;
+    padding:9px 12px; font-size:.78rem; font-weight:700; line-height:1.4; max-width:36ch;
+  }
   .stickers{display:flex; gap:6px; justify-content:center; flex-wrap:wrap; font-size:1.45rem; line-height:1.2}
   .stickers span{filter:grayscale(1) brightness(.55); opacity:.45}
   .stickers span.got{filter:none; opacity:1; text-shadow:0 0 12px rgba(247,208,70,.5)}
@@ -394,6 +400,8 @@
       <p class="subtitle">unser Zahlenheld</p>
       <div class="sequins" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <p class="tag">Neun Bühnen-Nummern rund um Zahlen, Farben, Formen und Muster. Zeig, was du kannst!</p>
+
+      <div class="warnbar" id="warnBar" hidden></div>
 
       <div class="card">
         <h2 class="t">🎁 Dein Preis-Konto</h2>
@@ -1576,11 +1584,16 @@ function paintStart() {
   $("tgMusic").setAttribute("aria-pressed", String(!!save.music));
   $("tgSpeech").setAttribute("aria-pressed", String(!!save.speech));
 
-  $("storeWarn").textContent = storeKind === "memory"
-    ? "Hinweis: Dieser Browser erlaubt kein Speichern. Punkte und Preise gelten nur, solange die Seite offen bleibt."
+  /* Bei eingeschränktem Speicher gut sichtbar warnen – sonst fällt der Verlust
+     erst auf, wenn das Preis-Konto weg ist. */
+  const warn = storeKind === "memory"
+    ? "⚠️ Auf diesem Weg kann nichts gespeichert werden. Punkte und Preise gelten nur für diese Sitzung – sichere sie unter „Für Erwachsene“ mit dem Code."
     : storeKind === "session"
-      ? "Hinweis: Punkte und Preise bleiben nur bis zum Schließen des Tabs erhalten."
+      ? "⚠️ Punkte und Preise bleiben nur bis zum Schließen erhalten – sichere sie unter „Für Erwachsene“ mit dem Code."
       : "";
+  $("storeWarn").textContent = warn;
+  $("warnBar").textContent = warn;
+  $("warnBar").hidden = !warn;
 }
 
 let chosenMode = "blitz";
