@@ -88,7 +88,9 @@ Es fehlt nur noch, Pages einzuschalten – **eine Seite, drei Auswahlfelder**:
    **„Deploy from a branch"** stellen.
 2. Darunter erscheint **Branch**. Im linken Feld (steht auf *None*)
    **`claude/educational-game-kids-x0xyc3`** wählen.
-3. Im rechten Feld (steht auf */ (root)*) **`/docs`** wählen.
+3. Das rechte Feld ist der Ordner. **`/docs`** ist ideal, **`/ (root)`**
+   funktioniert aber genauso: im Wurzelverzeichnis liegt eine Weiterleitung
+   auf `docs/`. Es ist also kein Fehler möglich.
 4. **Save** drücken.
 
 Nach ein bis zwei Minuten ist das Spiel erreichbar:
