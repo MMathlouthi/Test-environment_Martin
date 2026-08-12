@@ -13,23 +13,62 @@ Kein Server, kein Internet, keine Installation, keine Werbung, kein Tracking.
 
 ---
 
-## Offline und übertragbar
+## Zwei Wege aufs iPhone
 
-Die Datei lädt **nichts** aus dem Netz: Bilder, Icon, Klänge und Schriftregeln stecken
-alle drin (Formen als SVG, App-Icon als eingebettetes PNG, Töne werden im Browser
-synthetisiert). Geprüft mit blockiertem Netzwerk – **null externe Anfragen**.
+Es gibt das Spiel in zwei Fassungen. Beide laufen offline, aber nur eine bekommt ein
+Icon auf dem Home-Bildschirm.
 
-### Auf ein anderes iPhone übertragen
-1. `layla-zahlenheld.html` per **AirDrop** an das andere iPhone senden.
-2. Dort in der App **Dateien** antippen → das Spiel öffnet sich in Safari.
-3. In Safari **Teilen → Zum Home-Bildschirm**. Fertig: Vollbild mit eigenem Icon,
-   ohne Safari-Leisten, auch im Flugmodus.
+| | **Web-App** (`docs/`) | **Einzeldatei** (`layla-zahlenheld.html`) |
+|---|---|---|
+| Icon auf dem Home-Bildschirm | ✅ ja | ❌ nein |
+| Vollbild ohne Safari-Leisten | ✅ ja | ❌ nein |
+| Offline spielbar | ✅ nach dem ersten Laden | ✅ sofort |
+| Braucht Internet | einmalig zum Installieren | nie |
+| Weitergabe | Link öffnen | AirDrop |
 
-Alternativ funktioniert jeder Weg, der die Datei aufs Gerät bringt: iCloud Drive,
-E-Mail-Anhang, USB, WhatsApp an sich selbst.
+> **Warum kein Icon bei der Einzeldatei?** Safari bietet **„Zum Home-Bildschirm" nur für
+> Web-Adressen** an (`http`/`https`), nicht für lokale Dateien (`file://`) – genau wie bei
+> `data:`-Adressen. Das ist eine Einschränkung von iOS, kein Fehler des Spiels.
 
-> **Wichtig:** Punkte, Preise und Bestenlisten liegen immer nur auf dem jeweiligen Gerät.
-> Beim Übertragen wandert das Preis-Konto **nicht** mit – das neue Gerät startet bei Null.
+### A) Web-App mit Icon (empfohlen)
+
+Einmalige Einrichtung auf GitHub:
+
+1. Repo-Einstellungen → **Settings → General → Danger Zone → Change visibility → Public**.
+2. **Settings → Pages** → *Source:* `Deploy from a branch`,
+   *Branch:* `claude/educational-game-kids-x0xyc3`, *Folder:* `/docs` → **Save**.
+3. Nach ein bis zwei Minuten ist das Spiel erreichbar unter
+   **https://mmathlouthi.github.io/Test-environment_Martin/**
+
+Danach auf jedem iPhone: Adresse in **Safari** öffnen → **Teilen → Zum Home-Bildschirm**.
+Ab dann startet das Spiel im Vollbild mit Fedora-Icon und läuft **auch im Flugmodus**,
+weil ein Service Worker alles auf dem Gerät behält.
+
+Zum Weitergeben an ein anderes iPhone genügt der Link – kein AirDrop, keine Datei.
+
+### B) Einzeldatei ganz ohne Internet
+
+1. `layla-zahlenheld.html` per **AirDrop**, iCloud Drive oder E-Mail aufs iPhone bringen.
+2. In der App **Dateien** antippen. Erscheint nur eine Vorschau: oben rechts
+   **In Safari öffnen** wählen.
+3. Tipp: In der Dateien-App lange auf die Datei tippen → **Favorit**, dann ist sie
+   in zwei Tipps erreichbar.
+
+Diese Fassung lädt **nichts** aus dem Netz – Formen sind SVG, das Icon ein eingebettetes
+PNG, die Töne werden im Browser synthetisiert. Geprüft mit blockiertem Netzwerk:
+**null externe Anfragen**.
+
+> **Wichtig:** Punkte, Preise und Bestenlisten liegen immer nur auf dem jeweiligen Gerät –
+> und getrennt je Fassung. Beim Wechsel oder Übertragen wandert das Preis-Konto **nicht**
+> mit; dort wird bei Null gestartet.
+
+### Datenschutz-Hinweis zur Web-App
+
+Mit `Public` ist der Inhalt des Repos – und damit auch der Name im Spiel – **öffentlich
+im Internet lesbar**. Zwei Dinge dämpfen das: `docs/robots.txt` und ein
+`noindex`-Hinweis in der Seite halten Suchmaschinen ab, sodass die Seite nicht über eine
+Namenssuche auffindbar ist. Wer das Test-Repo privat halten will, kann `docs/` alternativ
+in ein eigenes, öffentliches Repo legen und nur dort Pages aktivieren.
 
 ### Geprüfte Geräte
 | Gerät | Status |
@@ -134,8 +173,30 @@ Löschen der Website-Daten setzt alles zurück; „Alles zurücksetzen" tut dass
 
 ## Für Entwickler
 
+### Dateien
+
+| Datei | Rolle |
+|---|---|
+| `layla-zahlenheld.html` | **Quelle der Wahrheit** – das komplette Spiel in einer Datei |
+| `build-docs.py` | erzeugt `docs/index.html` daraus (Manifest, Service Worker, Datei-Icons, `noindex`) |
+| `build-icons.py` | erzeugt die App-Icons als PNG, ohne externe Bibliotheken |
+| `docs/` | die Web-App für GitHub Pages: `index.html`, `sw.js`, `manifest.webmanifest`, Icons, `robots.txt` |
+
+Nach jeder Änderung am Spiel:
+
+```bash
+python3 build-docs.py        # docs/index.html neu erzeugen
+```
+
+`docs/index.html` wird generiert und sollte **nicht** direkt bearbeitet werden.
+Wird an den Dateien in `docs/` etwas geändert, in `docs/sw.js` die Zeile
+`const CACHE = "zahlenheld-v1"` hochzählen – sonst liefert der Service Worker
+weiter die alte Fassung aus.
+
+### Aufbau
+
 `layla-zahlenheld.html` ist bewusst eine Datei mit inline CSS und Vanilla JavaScript –
-keine Abhängigkeiten, kein Build-Schritt.
+keine Abhängigkeiten, kein Build-Schritt für das Spiel selbst.
 
 Ein neues Mini-Spiel besteht aus einer Funktion, die eine Aufgaben-Spezifikation liefert:
 

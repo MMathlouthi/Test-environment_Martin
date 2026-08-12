@@ -1,0 +1,3 @@
+# Das Spiel ist für die Familie gedacht, nicht für Suchmaschinen.
+User-agent: *
+Disallow: /
