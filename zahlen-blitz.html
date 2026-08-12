@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a1040">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Zahlen-Blitz">
+<meta name="description" content="Zahlen-Blitz – Lernspiel für Kinder: Rechnen bis 100, Malaufgaben, Farben, Formen, Muster und Merken. Läuft offline im Safari-Browser.">
+<title>Zahlen-Blitz</title>
+<style>
+  :root{
+    --bg1:#1a1040; --bg2:#2d1a6e; --bg3:#0d0827;
+    --card:rgba(255,255,255,.09);
+    --card2:rgba(255,255,255,.14);
+    --line:rgba(255,255,255,.18);
+    --ink:#ffffff;
+    --ink-dim:rgba(255,255,255,.72);
+    --good:#3ddc84; --bad:#ff5c7a;
+    --gold:#ffd93d; --cyan:#4de2ff; --pink:#ff6fc1;
+    --r:22px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%; overflow:hidden; overscroll-behavior:none;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Segoe UI Variable",
+                "Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(120% 80% at 15% 0%, #3a2496 0%, transparent 55%),
+      radial-gradient(120% 90% at 85% 100%, #7a1f6b 0%, transparent 55%),
+      linear-gradient(160deg,var(--bg1),var(--bg3));
+    background-attachment:fixed;
+    -webkit-user-select:none; user-select:none;
+    touch-action:manipulation;
+    -webkit-text-size-adjust:100%;
+  }
+  /* Deko-Blasen im Hintergrund */
+  .bubbles{position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;}
+  .bubbles i{
+    position:absolute; bottom:-15vh; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.35), rgba(255,255,255,.03));
+    animation:rise linear infinite;
+  }
+  @keyframes rise{
+    from{transform:translateY(0) scale(1); opacity:.0}
+    10%{opacity:.55}
+    to{transform:translateY(-125vh) scale(1.25); opacity:0}
+  }
+  @media (prefers-reduced-motion:reduce){ .bubbles{display:none} }
+
+  #app{
+    position:relative; z-index:1;
+    height:100vh; height:100dvh;
+    display:flex; flex-direction:column;
+    padding:calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 12px)
+            calc(env(safe-area-inset-bottom) + 10px) calc(env(safe-area-inset-left) + 12px);
+    max-width:760px; margin:0 auto;
+  }
+  .screen{display:none; flex:1; min-height:0; flex-direction:column;}
+  .screen.on{display:flex; animation:fadeIn .3s ease both;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
+
+  /* ---------- Startbildschirm ---------- */
+  .hero{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; flex:1; min-height:0; text-align:center;}
+  .logo{
+    font-size:clamp(2.2rem,11vw,3.6rem); font-weight:900; letter-spacing:-.02em; line-height:1;
+    background:linear-gradient(100deg,var(--gold),var(--pink) 45%,var(--cyan));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 4px 18px rgba(0,0,0,.35));
+  }
+  .logo-sub{color:var(--ink-dim); font-size:clamp(.85rem,3.6vw,1.05rem); font-weight:600; max-width:30ch;}
+  .flash{font-size:clamp(2.6rem,14vw,4rem); line-height:1; animation:pulse 2.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1) rotate(-4deg)} 50%{transform:scale(1.12) rotate(4deg)}}
+
+  .btn{
+    border:0; border-radius:999px; font:inherit; font-weight:800; color:#1a1040;
+    background:linear-gradient(180deg,#ffe680,var(--gold));
+    padding:16px 30px; font-size:clamp(1.05rem,4.6vw,1.35rem);
+    box-shadow:0 8px 0 #c9a417, 0 14px 26px rgba(0,0,0,.35);
+    transition:transform .08s ease, box-shadow .08s ease;
+    cursor:pointer; min-height:56px;
+  }
+  .btn:active{transform:translateY(5px); box-shadow:0 3px 0 #c9a417, 0 8px 16px rgba(0,0,0,.3);}
+  .btn.ghost{
+    background:var(--card); color:var(--ink); box-shadow:none; border:1.5px solid var(--line);
+    font-weight:700; padding:12px 20px; font-size:1rem; min-height:48px;
+  }
+  .btn.ghost:active{transform:scale(.97); background:var(--card2);}
+
+  .row{display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap;}
+  .chips{display:flex; gap:8px; background:var(--card); border:1.5px solid var(--line); border-radius:999px; padding:5px;}
+  .chip{
+    border:0; background:transparent; color:var(--ink-dim); font:inherit; font-weight:700;
+    padding:10px 16px; border-radius:999px; cursor:pointer; font-size:.95rem; min-height:44px;
+  }
+  .chip[aria-pressed="true"]{background:linear-gradient(180deg,#ffffff2b,#ffffff14); color:#fff; box-shadow:inset 0 0 0 1.5px #ffffff40;}
+
+  .toggles{display:flex; gap:8px; justify-content:center; flex-wrap:wrap;}
+  .tg{
+    border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:inherit; font-weight:700;
+    border-radius:999px; padding:10px 14px; font-size:.9rem; cursor:pointer; min-height:44px;
+  }
+  .tg[aria-pressed="false"]{opacity:.45;}
+
+  .stats-strip{
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap;
+    background:var(--card); border:1.5px solid var(--line); border-radius:var(--r); padding:10px 14px;
+  }
+  .stat{display:flex; flex-direction:column; align-items:center; min-width:74px;}
+  .stat b{font-size:1.25rem; line-height:1.1}
+  .stat span{font-size:.72rem; color:var(--ink-dim); font-weight:700; text-transform:uppercase; letter-spacing:.04em}
+
+  .zoo{display:flex; gap:6px; justify-content:center; flex-wrap:wrap; font-size:1.5rem; line-height:1.2}
+  .zoo span{filter:grayscale(1) brightness(.6); opacity:.5}
+  .zoo span.got{filter:none; opacity:1}
+
+  details.info{background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:10px 14px; color:var(--ink-dim); font-size:.85rem;}
+  details.info summary{cursor:pointer; font-weight:700; color:var(--ink); list-style:none;}
+  details.info summary::-webkit-details-marker{display:none}
+  details.info p{margin:8px 0 0; line-height:1.45}
+  details.info b{color:#fff}
+
+  /* ---------- Spielbildschirm ---------- */
+  .hud{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .hud .pill{
+    background:var(--card); border:1.5px solid var(--line); border-radius:999px;
+    padding:7px 12px; font-weight:800; font-size:.95rem; display:flex; gap:6px; align-items:center; white-space:nowrap;
+  }
+  .hud .pill small{font-size:.7rem; color:var(--ink-dim); font-weight:700}
+  .iconbtn{
+    margin-left:auto; border:1.5px solid var(--line); background:var(--card); color:#fff;
+    width:44px; height:44px; border-radius:50%; font-size:1.1rem; cursor:pointer; flex:none;
+  }
+  .timerwrap{height:12px; border-radius:999px; background:rgba(255,255,255,.13); overflow:hidden; margin-bottom:10px;}
+  .timerbar{height:100%; width:100%; border-radius:999px; background:linear-gradient(90deg,var(--good),var(--gold)); transition:width .2s linear;}
+  .timerbar.low{background:linear-gradient(90deg,#ff9f43,var(--bad)); animation:blink .7s steps(2) infinite}
+  .timerbar.progress{background:linear-gradient(90deg,var(--cyan),var(--pink))}
+  @keyframes blink{50%{opacity:.45}}
+  .timegain{
+    position:absolute; right:20px; top:calc(env(safe-area-inset-top) + 78px);
+    font-weight:900; font-size:1.15rem; opacity:0; pointer-events:none; z-index:6;
+    text-shadow:0 2px 10px rgba(0,0,0,.5);
+  }
+  .timegain.plus{color:var(--good)} .timegain.minus{color:var(--bad)}
+  .timegain.show{animation:tgain .9s ease both}
+  @keyframes tgain{
+    0%{opacity:0; transform:translateY(2px)}
+    25%{opacity:1; transform:translateY(-4px)}
+    100%{opacity:0; transform:translateY(-30px)}
+  }
+
+  .stage{
+    flex:1; min-height:0; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:clamp(8px,1.8vh,18px); text-align:center; padding:14px 12px;
+    background:var(--card); border:1.5px solid var(--line); border-radius:26px;
+    margin-bottom:10px;
+  }
+  .gamename{
+    font-size:.78rem; font-weight:900; letter-spacing:.1em; text-transform:uppercase; color:var(--cyan);
+  }
+  .prompt{font-size:clamp(1rem,min(4.4vw,3vh),1.5rem); font-weight:800; line-height:1.25; max-width:26ch;}
+  .question{
+    font-size:clamp(2rem,min(11vw,8vh),4.2rem); font-weight:900; letter-spacing:-.01em; line-height:1.05;
+    text-shadow:0 4px 20px rgba(0,0,0,.35); max-width:100%; overflow-wrap:anywhere;
+  }
+  .visual{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; max-width:100%;}
+  .grp{
+    display:flex; gap:4px; padding:7px 9px; border-radius:14px;
+    background:var(--card); border:1.5px solid var(--line); font-size:clamp(1.1rem,min(5vw,3.6vh),2rem); line-height:1;
+  }
+  .memo{font-size:clamp(2rem,min(11vw,7vh),3.6rem); display:flex; gap:12px; flex-wrap:wrap; justify-content:center;}
+  .seq{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center;}
+  .seq b, .seq i{
+    font-style:normal; font-weight:900; font-size:clamp(1.3rem,min(6.4vw,5vh),2.6rem);
+    background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:8px 12px; min-width:2.6em;
+  }
+  .seq i{border-style:dashed; color:var(--gold); border-color:var(--gold);}
+  .word{font-size:clamp(2.4rem,min(13vw,10vh),5rem); font-weight:900; letter-spacing:.02em; text-shadow:0 3px 14px rgba(0,0,0,.5);}
+  .countdown{font-size:clamp(1.1rem,5vw,1.5rem); font-weight:900; color:var(--gold);}
+
+  .options{display:grid; gap:10px; margin-top:6px;}
+  .options.c2{grid-template-columns:repeat(2,1fr)}
+  .options.c3{grid-template-columns:repeat(3,1fr)}
+  .options.c4{grid-template-columns:repeat(4,1fr)}
+  .opt{
+    border:2px solid var(--line); background:var(--card2); color:#fff; font:inherit; font-weight:900;
+    border-radius:20px; min-height:clamp(64px,9.5vh,98px); padding:10px 8px; cursor:pointer;
+    font-size:clamp(1.2rem,min(6vw,4.4vh),2.2rem); line-height:1.1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    transition:transform .08s ease, background .15s ease, border-color .15s ease;
+    box-shadow:0 5px 0 rgba(0,0,0,.28);
+  }
+  .opt small{font-size:.68rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-dim)}
+  .opt:active{transform:translateY(3px) scale(.985); box-shadow:0 2px 0 rgba(0,0,0,.28);}
+  .opt.right{background:rgba(61,220,132,.3); border-color:var(--good); animation:pop .35s ease}
+  .opt.wrong{background:rgba(255,92,122,.28); border-color:var(--bad); animation:shake .35s ease}
+  .opt[disabled]{cursor:default}
+  @keyframes pop{0%{transform:scale(1)} 45%{transform:scale(1.09)} 100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)} 40%{transform:translateX(7px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)}}
+
+  .toast{
+    position:fixed; left:50%; top:22%; transform:translate(-50%,-50%) scale(.7); z-index:30;
+    font-size:clamp(1.6rem,9vw,2.6rem); font-weight:900; pointer-events:none; opacity:0;
+    text-shadow:0 4px 18px rgba(0,0,0,.5); white-space:nowrap;
+  }
+  .toast.show{animation:toast .85s ease both}
+  @keyframes toast{
+    0%{opacity:0; transform:translate(-50%,-50%) scale(.6) rotate(-6deg)}
+    25%{opacity:1; transform:translate(-50%,-50%) scale(1.1) rotate(3deg)}
+    70%{opacity:1; transform:translate(-50%,-60%) scale(1) rotate(0)}
+    100%{opacity:0; transform:translate(-50%,-90%) scale(.95)}
+  }
+  .party{position:fixed; inset:0; pointer-events:none; z-index:25; overflow:hidden}
+  .party span{position:absolute; font-size:1.4rem; animation:fly .9s ease-out forwards}
+  @keyframes fly{
+    from{transform:translate(0,0) scale(.6); opacity:1}
+    to{transform:translate(var(--dx),var(--dy)) scale(1.3) rotate(var(--rot)); opacity:0}
+  }
+
+  /* ---------- Endbildschirm ---------- */
+  .endwrap{flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; gap:12px; padding:4px 2px 8px;}
+  .card{background:var(--card); border:1.5px solid var(--line); border-radius:var(--r); padding:14px;}
+  .bigscore{font-size:clamp(2.6rem,15vw,4.4rem); font-weight:900; line-height:1;
+    background:linear-gradient(100deg,var(--gold),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bar{display:flex; align-items:center; gap:8px; margin:7px 0; font-size:.9rem; font-weight:700}
+  .bar .t{flex:none; width:8.6em; text-align:left; color:var(--ink-dim); font-size:.8rem}
+  .bar .track{display:block; flex:1; height:12px; background:rgba(255,255,255,.13); border-radius:999px; overflow:hidden}
+  .bar .fill{display:block; height:100%; min-width:0; border-radius:999px; background:linear-gradient(90deg,var(--cyan),var(--good))}
+  .bar .n{flex:none; width:3.4em; text-align:right; font-variant-numeric:tabular-nums}
+  h2.t{margin:0 0 6px; font-size:1rem; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-dim)}
+  .newbest{color:var(--gold); font-weight:900; font-size:1.05rem}
+
+  @media (max-height:560px){
+    .logo{font-size:2rem} .flash{font-size:2.2rem}
+    .opt{min-height:58px} .question{font-size:clamp(1.7rem,9vw,2.6rem)}
+    .stage{gap:6px}
+  }
+</style>
+</head>
+<body>
+<div class="bubbles" id="bubbles" aria-hidden="true"></div>
+<div class="toast" id="toast" aria-hidden="true"></div>
+<div class="party" id="party" aria-hidden="true"></div>
+
+<div id="app">
+
+  <!-- ============ START ============ -->
+  <section class="screen on" id="scr-start">
+    <div class="hero">
+      <div class="flash">⚡️</div>
+      <div class="logo">Zahlen-Blitz</div>
+      <div class="logo-sub">Rechnen, Farben, Formen, Muster und Merken – wie schnell schaffst du es?</div>
+
+      <div class="stats-strip" id="startStats"></div>
+      <div class="zoo" id="zoo" title="Sammle Sterne und schalte Tiere frei"></div>
+
+      <div class="chips" role="group" aria-label="Spielmodus">
+        <button class="chip" id="mBlitz" aria-pressed="true">⚡️ Blitz (90 s)</button>
+        <button class="chip" id="mRuhig" aria-pressed="false">🌙 Ruhig (20 Aufgaben)</button>
+      </div>
+
+      <button class="btn" id="btnStart">Los geht’s!</button>
+
+      <div class="toggles">
+        <button class="tg" id="tgSound" aria-pressed="true">🔔 Töne</button>
+        <button class="tg" id="tgSpeech" aria-pressed="true">🗣️ Vorlesen</button>
+      </div>
+
+      <details class="info">
+        <summary>ℹ️ Für Erwachsene: Was wird geübt?</summary>
+        <p><b>Rechnen bis 100</b> mit Zehnerübergang, <b>Umkehr- und Lückenaufgaben</b>,
+        <b>erstes Einmaleins</b> (1er, 2er, 5er, 10er) mit Bildern zum Bündeln,
+        <b>Zahlenreihen</b> in 1er-/2er-/5er-/10er-Schritten (auch rückwärts),
+        <b>Größer / Kleiner / Gleich</b>, <b>Farben und Formen</b> zählen und unterscheiden,
+        <b>Muster</b> fortsetzen, <b>Konzentration</b> (Farb-Falle) und <b>Merkfähigkeit</b>.</p>
+        <p>Die Schwierigkeit steigt automatisch mit jeder richtigen Antwort – Stufe 1 bis 5.
+        Im <b>Ruhig-Modus</b> gibt es keine Uhr, dafür 20 Aufgaben in Ruhe.
+        Alle Bestwerte werden nur lokal auf diesem Gerät gespeichert.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ SPIEL ============ -->
+  <section class="screen" id="scr-play">
+    <div class="hud">
+      <div class="pill"><small>Punkte</small><b id="hScore">0</b></div>
+      <div class="pill"><small>Serie</small><b id="hStreak">🔥 0</b></div>
+      <div class="pill" id="hLevelPill"><small>Stufe</small><b id="hLevel">1</b></div>
+      <button class="iconbtn" id="btnQuit" aria-label="Spiel beenden">✕</button>
+    </div>
+    <div class="timerwrap"><div class="timerbar" id="timerbar"></div></div>
+    <div class="timegain" id="timegain" aria-hidden="true"></div>
+
+    <div class="stage">
+      <div class="gamename" id="gName">&nbsp;</div>
+      <div class="prompt" id="gPrompt">&nbsp;</div>
+      <div class="question" id="gQuestion"></div>
+      <div class="visual" id="gVisual"></div>
+    </div>
+
+    <div class="options c2" id="gOptions"></div>
+  </section>
+
+  <!-- ============ ENDE ============ -->
+  <section class="screen" id="scr-end">
+    <div class="endwrap">
+      <div class="card" style="text-align:center">
+        <div id="endTitle" style="font-weight:900; font-size:1.2rem">Super gemacht!</div>
+        <div class="bigscore" id="endScore">0</div>
+        <div id="endBest" style="color:var(--ink-dim); font-weight:700"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="t">Deine Runde</h2>
+        <div class="row" style="justify-content:space-around">
+          <div class="stat"><b id="endRight">0</b><span>richtig</span></div>
+          <div class="stat"><b id="endWrong">0</b><span>daneben</span></div>
+          <div class="stat"><b id="endStreak">0</b><span>beste Serie</span></div>
+          <div class="stat"><b id="endLevel">1</b><span>Stufe</span></div>
+        </div>
+      </div>
+
+      <div class="card" id="endBreak">
+        <h2 class="t">Wie lief welches Spiel?</h2>
+        <div id="endBars"></div>
+      </div>
+
+      <div class="card" id="endZoo" style="text-align:center"></div>
+
+      <div class="row">
+        <button class="btn" id="btnAgain">Nochmal spielen 🔁</button>
+        <button class="btn ghost" id="btnHome">Startseite</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================================
+   Zahlen-Blitz – Lernspiel für den Übergang Klasse 1 → Klasse 2
+   Eine einzelne HTML-Datei, komplett offline, optimiert für iOS-Safari.
+   ========================================================================= */
+
+/* ---------------------------- kleine Helfer ---------------------------- */
+const $ = (id) => document.getElementById(id);
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const shuffle = (arr) => {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+/* Erzeugt aus einer richtigen Zahl drei plausible Nachbar-Antworten. */
+function numOptions(correct, spread) {
+  const s = spread || 10;
+  const cands = new Set();
+  const deltas = [1, -1, 2, -2, 10, -10, 5, -5, 3, -3, 20, -20];
+  for (const d of shuffle(deltas)) {
+    const v = correct + d;
+    if (v >= 0 && v !== correct && v <= correct + s * 3 + 20) cands.add(v);
+    if (cands.size >= 8) break;
+  }
+  const three = shuffle([...cands]).slice(0, 3);
+  while (three.length < 3) {
+    const v = Math.max(0, correct + rnd(-12, 12));
+    if (v !== correct && !three.includes(v)) three.push(v);
+  }
+  return shuffle([correct, ...three]).map((v) => ({ html: String(v), val: v }));
+}
+
+/* ---------------------------- Farben & Formen ---------------------------- */
+const COLORS = [
+  { name: "Rot",    adj: "rote",   hex: "#ff4d4d" },
+  { name: "Blau",   adj: "blaue",  hex: "#4d9cff" },
+  { name: "Grün",   adj: "grüne",  hex: "#3ddc84" },
+  { name: "Gelb",   adj: "gelbe",  hex: "#ffd93d" },
+  { name: "Lila",   adj: "lila",   hex: "#b57bff" },
+  { name: "Orange", adj: "orange", hex: "#ff8c42" },
+  { name: "Pink",   adj: "pinke",  hex: "#ff6fc1" },
+];
+
+const SHAPES = [
+  { name: "Kreis",   pl: "Kreise",   d: '<circle cx="50" cy="50" r="42"/>' },
+  { name: "Quadrat", pl: "Quadrate", d: '<rect x="10" y="10" width="80" height="80" rx="12"/>' },
+  { name: "Dreieck", pl: "Dreiecke", d: '<polygon points="50,8 93,90 7,90"/>' },
+  { name: "Stern",   pl: "Sterne",   d: '<polygon points="50,4 62,37 97,37 69,58 79,92 50,71 21,92 31,58 3,37 38,37"/>' },
+  { name: "Herz",    pl: "Herzen",   d: '<path d="M50 90C8 62 6 30 27 19c13-7 23 2 23 11 0-9 10-18 23-11 21 11 19 43-23 71z"/>' },
+  { name: "Raute",   pl: "Rauten",   d: '<polygon points="50,5 95,50 50,95 5,50"/>' },
+];
+
+function svgShape(shape, color, size) {
+  return '<svg viewBox="0 0 100 100" width="' + size + '" height="' + size +
+    '" aria-hidden="true" style="display:block"><g fill="' + color.hex + '">' + shape.d + "</g></svg>";
+}
+
+const EMOJI = ["🍎","🐶","🚗","⭐️","🌸","🐟","🍌","🎈","🐝","🍄","🚀","🦋","🍓","🐧","🎸","🐞","🌈","🍦","🐸","⚽️","🎁","🐳","🦉","🍉"];
+
+/* ---------------------------- Speichern ---------------------------- */
+const SAVE_KEY = "zahlenblitz_v1";
+const DEFAULT_SAVE = { high: 0, highRuhig: 0, bestStreak: 0, stars: 0, sound: true, speech: true, plays: 0 };
+let save = loadSave();
+
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return { ...DEFAULT_SAVE };
+    return { ...DEFAULT_SAVE, ...JSON.parse(raw) };
+  } catch (e) {
+    return { ...DEFAULT_SAVE };
+  }
+}
+function persist() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* Privatmodus: egal */ }
+}
+
+const ZOO = [
+  { at: 10,  e: "🐣" }, { at: 25,  e: "🐰" }, { at: 45,  e: "🦊" },
+  { at: 70,  e: "🐼" }, { at: 100, e: "🦁" }, { at: 140, e: "🐬" },
+  { at: 190, e: "🦄" }, { at: 250, e: "🐉" }, { at: 320, e: "🦖" },
+  { at: 400, e: "🐳" },
+];
+
+/* ---------------------------- Ton & Stimme ---------------------------- */
+let actx = null;
+function audio() {
+  if (!save.sound) return null;
+  if (!actx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    actx = new AC();
+  }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function beep(freqs, dur, type, vol) {
+  const ctx = audio();
+  if (!ctx) return;
+  let t = ctx.currentTime;
+  freqs.forEach((f, i) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type || "sine";
+    o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol || 0.16, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+    t += dur * 0.62;
+  });
+}
+const sndRight = () => beep([660, 880, 1180], 0.13, "triangle", 0.18);
+const sndWrong = () => beep([300, 190], 0.18, "sawtooth", 0.1);
+const sndTick  = () => beep([1000], 0.05, "square", 0.05);
+const sndEnd   = () => beep([523, 659, 784, 1047], 0.18, "triangle", 0.16);
+
+let voiceDE = null;
+function findVoice() {
+  if (!("speechSynthesis" in window)) return;
+  const vs = speechSynthesis.getVoices() || [];
+  voiceDE = vs.find((v) => /de[-_]DE/i.test(v.lang)) || vs.find((v) => /^de/i.test(v.lang)) || null;
+}
+if ("speechSynthesis" in window) {
+  findVoice();
+  speechSynthesis.onvoiceschanged = findVoice;
+}
+function speak(text) {
+  if (!save.speech || !text || !("speechSynthesis" in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "de-DE";
+    if (voiceDE) u.voice = voiceDE;
+    u.rate = 0.95; u.pitch = 1.1;
+    speechSynthesis.speak(u);
+  } catch (e) { /* nicht kritisch */ }
+}
+/* iOS erlaubt Audio/Stimme erst nach einer echten Nutzer-Berührung. */
+function unlockMedia() {
+  audio();
+  if (save.speech && "speechSynthesis" in window) {
+    try {
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0; u.lang = "de-DE";
+      speechSynthesis.speak(u);
+    } catch (e) { /* egal */ }
+  }
+}
+
+/* Zahlen und Zeichen vorlesbar machen */
+function sayMath(s) {
+  return String(s)
+    .replace(/\+/g, " plus ")
+    .replace(/[−-]/g, " minus ")
+    .replace(/[×x]/g, " mal ")
+    .replace(/=/g, " gleich ")
+    .replace(/\?/g, " wie viel ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* =========================================================================
+   Die Mini-Spiele
+   Jedes Spiel liefert: { prompt, question?, visualHTML?, options[], correct,
+                          cols?, speak?, preview? }
+   ========================================================================= */
+
+/* 1 – Rechnen bis 100 (Plus/Minus, mit Zehnerübergang) */
+function gameRechnen(lv) {
+  let a, b, plus = Math.random() < 0.5, res;
+  if (lv <= 1)      { a = rnd(2, 10);  b = rnd(1, 9);  }
+  else if (lv === 2){ a = rnd(6, 18);  b = rnd(3, 9);  }
+  else if (lv === 3){ a = rnd(21, 79); b = rnd(3, 9);  }
+  else if (lv === 4){ a = rnd(20, 70); b = rnd(10, 29);}
+  else              { a = rnd(30, 89); b = rnd(12, 48);}
+  if (plus && a + b > 100) a = Math.max(1, 100 - b);
+  if (!plus && a < b) { const t = a; a = b; b = t; }
+  res = plus ? a + b : a - b;
+
+  const q = a + (plus ? " + " : " − ") + b;
+  return {
+    prompt: "Rechne aus:",
+    question: q + " = ?",
+    options: numOptions(res, Math.max(10, b)),
+    correct: res,
+    cols: 2,
+    speak: sayMath(q),
+  };
+}
+
+/* 2 – Lückenaufgabe / Umkehraufgabe */
+function gameLuecke(lv) {
+  const max = lv <= 1 ? 10 : lv === 2 ? 20 : lv === 3 ? 40 : lv === 4 ? 70 : 100;
+  const sum = rnd(Math.max(6, Math.floor(max / 3)), max);
+  const part = rnd(1, sum - 1);
+  const rest = sum - part;
+  const form = rnd(1, 3);
+  let q, res;
+  if (form === 1)      { q = part + " + ? = " + sum;  res = rest; }
+  else if (form === 2) { q = "? + " + rest + " = " + sum; res = part; }
+  else                 { q = sum + " − ? = " + part;  res = rest; }
+  return {
+    prompt: "Welche Zahl fehlt?",
+    question: q,
+    options: numOptions(res, 10),
+    correct: res,
+    cols: 2,
+    speak: sayMath(q),
+  };
+}
+
+/* 3 – Erstes Einmaleins mit Bildern (Bündeln) */
+function gameMal(lv) {
+  const reihen = lv <= 1 ? [1, 2, 10] : lv === 2 ? [1, 2, 5, 10] : [2, 5, 10];
+  const b = pick(reihen);
+  const a = lv <= 2 ? rnd(2, 5) : rnd(2, 10);
+  const res = a * b;
+  const umkehr = lv >= 4 && Math.random() < 0.45;
+
+  const e = pick(EMOJI);
+  let vis = "";
+  if (a * b <= 40) {
+    for (let i = 0; i < a; i++) vis += '<span class="grp">' + e.repeat(b) + "</span>";
+  }
+
+  if (umkehr) {
+    const q = "? × " + b + " = " + res;
+    return {
+      prompt: "Wie viele Gruppen sind das?",
+      question: q,
+      visualHTML: vis,
+      options: numOptions(a, 5),
+      correct: a,
+      cols: 2,
+      speak: sayMath(q),
+    };
+  }
+  const q = a + " × " + b;
+  return {
+    prompt: a + " Gruppen mit je " + b + " – wie viele sind es?",
+    question: q + " = ?",
+    visualHTML: vis,
+    options: numOptions(res, b * 2),
+    correct: res,
+    cols: 2,
+    speak: sayMath(q),
+  };
+}
+
+/* 4 – Zahlenreihe fortsetzen (vor- und rückwärts) */
+function gameReihe(lv) {
+  const steps = lv <= 1 ? [1, 10] : lv === 2 ? [1, 2, 10] : lv === 3 ? [2, 5, 10] : [2, 3, 5, 10];
+  const st = pick(steps);
+  const down = lv >= 3 && Math.random() < 0.45;
+  const len = 5;
+  let start;
+  if (down) start = rnd(st * len, 100);
+  else      start = rnd(0, Math.max(1, 100 - st * len));
+  const seq = [];
+  for (let i = 0; i < len; i++) seq.push(down ? start - i * st : start + i * st);
+  if (seq.some((n) => n < 0 || n > 120)) return gameReihe(1);
+
+  const gap = rnd(1, len - 2);
+  const res = seq[gap];
+  const html = '<div class="seq">' + seq.map((n, i) => (i === gap ? "<i>?</i>" : "<b>" + n + "</b>")).join("") + "</div>";
+  return {
+    prompt: down ? "Rückwärts in " + st + "er-Schritten – welche Zahl fehlt?"
+                 : "Wie geht die Reihe weiter? Welche Zahl fehlt?",
+    visualHTML: html,
+    options: numOptions(res, st * 2),
+    correct: res,
+    cols: 2,
+    speak: "Welche Zahl fehlt in der Reihe?",
+  };
+}
+
+/* 5 – Größer, kleiner oder gleich */
+function gameVergleich(lv) {
+  let L, R, lt, rt;
+  const term = (max) => {
+    if (Math.random() < (lv >= 3 ? 0.6 : 0.15)) {
+      const a = rnd(2, Math.floor(max / 2)), b = rnd(2, Math.floor(max / 2));
+      const p = Math.random() < 0.6;
+      return p ? { v: a + b, t: a + " + " + b } : { v: Math.max(a, b) - Math.min(a, b), t: Math.max(a, b) + " − " + Math.min(a, b) };
+    }
+    const v = rnd(1, max);
+    return { v: v, t: String(v) };
+  };
+  const max = lv <= 1 ? 20 : lv === 2 ? 40 : lv === 3 ? 70 : 100;
+  const a = term(max), b = term(max);
+  L = a.v; R = b.v; lt = a.t; rt = b.t;
+  if (Math.random() < 0.18) { R = L; rt = String(L); } // ab und zu "gleich"
+
+  const res = L > R ? ">" : L < R ? "<" : "=";
+  return {
+    prompt: "Was passt in die Mitte?",
+    question: '<span style="font-size:clamp(1.5rem,min(7.5vw,6vh),3rem)">' + lt +
+              '&nbsp; <span style="color:var(--gold)">?</span> &nbsp;' + rt + "</span>",
+    // Feste Reihenfolge wie auf dem Zahlenstrahl – das Kind liest das Zeichen,
+    // statt sich eine Position zu merken.
+    options: [
+      { html: "&lt;", val: "<", sub: "kleiner" },
+      { html: "=",    val: "=", sub: "gleich" },
+      { html: "&gt;", val: ">", sub: "größer" },
+    ],
+    correct: res,
+    cols: 3,
+    speak: sayMath(lt) + " ... oder ... " + sayMath(rt),
+  };
+}
+
+/* 6 – Farb-Falle (Konzentration: Wort gegen Farbe) */
+function gameFarbFalle(lv) {
+  const pool = COLORS.slice(0, lv <= 2 ? 4 : 5);
+  const cols = shuffle(pool);
+  const word = cols[0];
+  let ink = cols[1];
+  if (lv <= 1 && Math.random() < 0.3) ink = word; // am Anfang ab und zu einfach
+  const askInk = Math.random() < 0.5;
+
+  const answer = askInk ? ink : word;
+  const opts = shuffle(pool).map((c) => ({
+    html: '<span style="display:inline-block;width:1.5em;height:1.5em;border-radius:50%;background:' +
+          c.hex + ';box-shadow:0 0 0 2px rgba(255,255,255,.35) inset"></span>',
+    sub: c.name,
+    val: c.name,
+  }));
+  return {
+    prompt: askInk ? "Welche FARBE hat die Schrift?" : "Welches WORT steht da?",
+    question: '<span class="word" style="color:' + ink.hex + '">' + word.name.toUpperCase() + "</span>",
+    options: opts,
+    correct: answer.name,
+    cols: opts.length >= 5 ? 3 : 2,
+    speak: askInk ? "Welche Farbe hat die Schrift?" : "Welches Wort steht da?",
+  };
+}
+
+/* 7 – Formen und Farben zählen */
+function gameFormen(lv) {
+  const n = lv <= 1 ? 6 : lv === 2 ? 8 : lv === 3 ? 10 : 12;
+  const shapePool = SHAPES.slice(0, lv <= 2 ? 3 : lv === 3 ? 4 : 6);
+  const colorPool = COLORS.slice(0, lv <= 2 ? 3 : lv === 3 ? 4 : 5);
+
+  const target = { s: pick(shapePool), c: pick(colorPool) };
+  const hits = Math.min(n - 1, rnd(1, lv <= 2 ? 4 : 6));
+  const items = [];
+  for (let i = 0; i < hits; i++) items.push({ s: target.s, c: target.c });
+  while (items.length < n) {
+    const s = pick(shapePool), c = pick(colorPool);
+    if (s.name === target.s.name && c.name === target.c.name) continue;
+    items.push({ s: s, c: c });
+  }
+  const size = n > 9 ? 48 : 60;
+  const vis = shuffle(items)
+    .map((it) => '<span style="display:inline-flex">' + svgShape(it.s, it.c, size) + "</span>")
+    .join("");
+
+  return {
+    prompt: "Wie viele " + target.c.adj + " " + target.s.pl + " siehst du?",
+    visualHTML: '<div class="visual" style="max-width:min(94vw,420px)">' + vis + "</div>",
+    options: shuffle([
+      { html: String(hits), val: hits },
+      { html: String(hits + 1), val: hits + 1 },
+      { html: String(Math.max(0, hits - 1)), val: Math.max(0, hits - 1) },
+      { html: String(hits + 2), val: hits + 2 },
+    ].filter((o, i, arr) => arr.findIndex((x) => x.val === o.val) === i)),
+    correct: hits,
+    cols: 4,
+    speak: "Wie viele " + target.c.adj + " " + target.s.pl + " siehst du?",
+  };
+}
+
+/* 8 – Muster fortsetzen */
+function gameMuster(lv) {
+  const per = lv <= 2 ? 2 : 3;
+  const shapePool = shuffle(SHAPES).slice(0, per);
+  const colorPool = shuffle(COLORS).slice(0, per);
+  const base = [];
+  for (let i = 0; i < per; i++) {
+    // Bis Stufe 3 wechselt nur die Farbe, ab Stufe 4 auch die Form.
+    base.push({ s: lv >= 4 ? shapePool[i] : shapePool[0], c: colorPool[i] });
+  }
+  const total = per * 2 + rnd(1, per);
+  const seq = [];
+  for (let i = 0; i < total; i++) seq.push(base[i % per]);
+  const next = base[total % per];
+
+  const vis = seq.map((it) => svgShape(it.s, it.c, 52)).join("") +
+    '<span style="font-size:2rem;font-weight:900;color:var(--gold);padding:0 6px">?</span>';
+
+  /* Ablenker müssen in der gleichen Dimension variieren wie das Muster –
+     sonst könnte man die Lösung an der Form erkennen, ohne das Muster zu lesen. */
+  const wrong = [];
+  const same = (a, b) => a.s.name === b.s.name && a.c.name === b.c.name;
+  // 1. die übrigen Musterglieder – das ist der typische Denkfehler
+  base.forEach((it) => { if (!same(it, next)) wrong.push(it); });
+  // 2. gleiche Form, noch nicht benutzte Farben
+  const usedC = new Set(base.map((b) => b.c.name));
+  for (const c of shuffle(COLORS)) {
+    if (wrong.length >= 3) break;
+    if (usedC.has(c.name)) continue;
+    wrong.push({ s: next.s, c: c });
+  }
+  // 3. Notfall: andere Form in der richtigen Farbe
+  for (const s of shuffle(SHAPES)) {
+    if (wrong.length >= 3) break;
+    const cand = { s: s, c: next.c };
+    if (same(cand, next) || wrong.some((w) => same(w, cand))) continue;
+    wrong.push(cand);
+  }
+  wrong.length = Math.min(wrong.length, 3);
+  const opts = shuffle([next, ...wrong]).map((it, i) => ({
+    html: svgShape(it.s, it.c, 50),
+    val: it.s.name + "|" + it.c.name,
+  }));
+  return {
+    prompt: "Wie geht das Muster weiter?",
+    visualHTML: '<div class="visual">' + vis + "</div>",
+    options: opts,
+    correct: next.s.name + "|" + next.c.name,
+    cols: 4,
+    speak: "Wie geht das Muster weiter?",
+  };
+}
+
+/* 9 – Merk-Blitz (Gedächtnis) */
+function gameMerken(lv) {
+  const n = lv <= 1 ? 3 : lv === 2 ? 4 : lv === 3 ? 5 : 6;
+  const ms = lv <= 1 ? 2600 : lv === 2 ? 2400 : lv === 3 ? 2200 : 2000;
+  const set = shuffle(EMOJI);
+  const shown = set.slice(0, n);
+  const unseen = set.slice(n, n + 3);
+  const askMissing = lv >= 3;
+
+  const previewHTML = '<div class="memo">' + shown.join(" ") + "</div>";
+  let opts, correct, prompt;
+  if (askMissing) {
+    // 3 gesehene + 1 ungesehenes → welches war NICHT dabei?
+    const three = shuffle(shown).slice(0, 3);
+    correct = unseen[0];
+    opts = shuffle([correct, ...three]).map((e) => ({ html: e, val: e }));
+    prompt = "Welches Ding war NICHT dabei?";
+  } else {
+    correct = pick(shown);
+    opts = shuffle([correct, ...unseen]).map((e) => ({ html: e, val: e }));
+    prompt = "Welches Ding war dabei?";
+  }
+  return {
+    prompt: prompt,
+    options: opts,
+    correct: correct,
+    cols: 4,
+    speak: prompt,
+    preview: { html: previewHTML, ms: ms, text: "Gut merken!" },
+  };
+}
+
+const GAMES = [
+  { id: "rechnen",   name: "Rechen-Blitz",  make: gameRechnen,   w: 3 },
+  { id: "luecke",    name: "Lücken-Jäger",  make: gameLuecke,    w: 2 },
+  { id: "mal",       name: "Mal-Monster",   make: gameMal,       w: 2 },
+  { id: "reihe",     name: "Zahlen-Reihe",  make: gameReihe,     w: 2 },
+  { id: "vergleich", name: "Größer-Kleiner",make: gameVergleich, w: 2 },
+  { id: "farbfalle", name: "Farb-Falle",    make: gameFarbFalle, w: 2 },
+  { id: "formen",    name: "Formen-Finder", make: gameFormen,    w: 2 },
+  { id: "muster",    name: "Muster-Meister",make: gameMuster,    w: 2 },
+  { id: "merken",    name: "Merk-Blitz",    make: gameMerken,    w: 2 },
+];
+
+/* =========================================================================
+   Spielablauf
+   ========================================================================= */
+const ROUND_TIME = 90;      // Sekunden im Blitz-Modus
+const RUHIG_TASKS = 20;     // Aufgaben im Ruhig-Modus
+const BONUS_OK = 2;         // Sekunden Bonus für richtig
+const MALUS_NO = 2;         // Sekunden Abzug für falsch
+
+const S = {
+  mode: "blitz",
+  running: false,
+  locked: true,
+  score: 0, right: 0, wrong: 0, streak: 0, bestStreak: 0, level: 1,
+  time: ROUND_TIME, tasks: 0,
+  spec: null, game: null,
+  bag: [], lastId: null,
+  perGame: {},
+};
+
+let ticker = null, lastTick = 0;
+
+function show(which) {
+  ["start", "play", "end"].forEach((k) => $("scr-" + k).classList.toggle("on", k === which));
+}
+
+function nextGame() {
+  if (!S.bag.length) {
+    const b = [];
+    GAMES.forEach((g) => { for (let i = 0; i < g.w; i++) b.push(g); });
+    S.bag = shuffle(b);
+  }
+  let g = S.bag.pop();
+  if (g.id === S.lastId && S.bag.length) {
+    const alt = S.bag.pop();
+    S.bag.unshift(g);
+    g = alt;
+  }
+  S.lastId = g.id;
+  return g;
+}
+
+function startGame(mode) {
+  S.mode = mode;
+  S.running = true;
+  S.score = 0; S.right = 0; S.wrong = 0; S.streak = 0; S.bestStreak = 0;
+  S.level = 1; S.time = ROUND_TIME; S.tasks = 0;
+  S.bag = []; S.lastId = null; S.perGame = {};
+  updateHUD();
+  show("play");
+  newRound();
+  if (mode === "blitz") {
+    lastTick = performance.now();
+    clearInterval(ticker);
+    ticker = setInterval(tick, 100);
+  } else {
+    clearInterval(ticker);
+    paintTimer();
+  }
+}
+
+function tick() {
+  if (!S.running) return;
+  const now = performance.now();
+  const dt = (now - lastTick) / 1000;
+  lastTick = now;
+  const before = Math.ceil(S.time);
+  S.time -= dt;
+  if (S.time <= 0) { S.time = 0; endGame(); return; }
+  const after = Math.ceil(S.time);
+  if (after !== before && after <= 5) sndTick();
+  paintTimer();
+}
+
+function paintTimer() {
+  const bar = $("timerbar");
+  if (S.mode === "ruhig") {
+    // Im Ruhig-Modus füllt sich der Balken als Fortschritt statt abzulaufen.
+    bar.classList.remove("low");
+    bar.classList.add("progress");
+    bar.style.width = Math.round((S.tasks / RUHIG_TASKS) * 100) + "%";
+    return;
+  }
+  bar.classList.remove("progress");
+  const pct = Math.max(0, Math.min(100, (S.time / ROUND_TIME) * 100));
+  bar.style.width = pct + "%";
+  bar.classList.toggle("low", S.time <= 12);
+}
+
+function updateHUD() {
+  $("hScore").textContent = S.score;
+  $("hStreak").textContent = "🔥 " + S.streak;
+  $("hLevel").textContent = S.level;
+  paintTimer();
+}
+
+function newRound() {
+  S.locked = true;
+  const g = nextGame();
+  const spec = g.make(S.level);
+  S.game = g; S.spec = spec;
+
+  $("gName").textContent = g.name;
+  $("gPrompt").innerHTML = spec.prompt || "&nbsp;";
+  const opts = $("gOptions");
+  opts.className = "options c" + (spec.cols || 2);
+  opts.innerHTML = "";
+
+  if (spec.preview) {
+    // Merkphase: erst zeigen, dann fragen
+    $("gQuestion").innerHTML = '<span class="countdown" id="cd">' + spec.preview.text + "</span>";
+    $("gVisual").innerHTML = spec.preview.html;
+    speak(spec.preview.text);
+    let left = Math.round(spec.preview.ms / 1000);
+    const cd = setInterval(() => {
+      left--;
+      const el = $("cd");
+      if (el) el.textContent = left > 0 ? spec.preview.text + " " + left : spec.preview.text;
+      if (left <= 0) clearInterval(cd);
+    }, 1000);
+    setTimeout(() => {
+      clearInterval(cd);
+      if (!S.running || S.spec !== spec) return;
+      $("gQuestion").innerHTML = "";
+      $("gVisual").innerHTML = "";
+      renderOptions(spec);
+      speak(spec.speak || spec.prompt);
+      S.locked = false;
+    }, spec.preview.ms);
+    return;
+  }
+
+  $("gQuestion").innerHTML = spec.question || "";
+  $("gVisual").innerHTML = spec.visualHTML || "";
+  renderOptions(spec);
+  speak(spec.speak || spec.prompt);
+  S.locked = false;
+}
+
+function renderOptions(spec) {
+  const box = $("gOptions");
+  box.innerHTML = "";
+  spec.options.forEach((o, i) => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.type = "button";
+    b.innerHTML = o.html + (o.sub ? "<small>" + o.sub + "</small>" : "");
+    b.dataset.val = String(o.val);
+    b.addEventListener("click", () => answer(b, o.val));
+    box.appendChild(b);
+  });
+}
+
+function answer(btn, val) {
+  if (S.locked || !S.running) return;
+  S.locked = true;
+  const spec = S.spec;
+  const ok = String(val) === String(spec.correct);
+  const gid = S.game.id;
+  if (!S.perGame[gid]) S.perGame[gid] = { name: S.game.name, ok: 0, n: 0 };
+  S.perGame[gid].n++;
+
+  document.querySelectorAll(".opt").forEach((el) => { el.disabled = true; });
+
+  if (ok) {
+    S.perGame[gid].ok++;
+    S.right++;
+    S.streak++;
+    if (S.streak > S.bestStreak) S.bestStreak = S.streak;
+    const bonus = Math.min(5, Math.floor(S.streak / 3)) * 5;
+    S.score += 10 * S.level + bonus;
+    btn.classList.add("right");
+    sndRight();
+    party(btn);
+    toast(pick(["Super! 🎉", "Klasse! ⭐️", "Genau! 👏", "Toll! 🌟", "Perfekt! 🚀", "Weiter so! 💪"]));
+    if (S.streak > 0 && S.streak % 5 === 0) toast("Serie " + S.streak + "! 🔥");
+    if (S.mode === "blitz") {
+      S.time = Math.min(ROUND_TIME, S.time + BONUS_OK);
+      timeGain("+" + BONUS_OK + " s", true);
+    }
+    const nl = Math.min(5, 1 + Math.floor(S.right / 6));
+    if (nl > S.level) { S.level = nl; setTimeout(() => toast("Stufe " + S.level + "! 🆙"), 500); }
+  } else {
+    S.wrong++;
+    S.streak = 0;
+    btn.classList.add("wrong");
+    sndWrong();
+    // richtige Antwort zeigen – das Lernen passiert hier
+    document.querySelectorAll(".opt").forEach((el) => {
+      if (el.dataset.val === String(spec.correct)) el.classList.add("right");
+    });
+    toast("Fast! 🙂");
+    if (S.mode === "blitz") {
+      S.time = Math.max(0.6, S.time - MALUS_NO);
+      timeGain("−" + MALUS_NO + " s", false);
+    }
+  }
+
+  updateHUD();
+  S.tasks++;
+
+  const wait = ok ? 620 : 1250;
+  setTimeout(() => {
+    if (!S.running) return;
+    if (S.mode === "ruhig" && S.tasks >= RUHIG_TASKS) { endGame(); return; }
+    newRound();
+  }, wait);
+}
+
+/* --------------------------- Effekte --------------------------- */
+let gainT = null;
+function timeGain(text, plus) {
+  const el = $("timegain");
+  el.textContent = text;
+  el.className = "timegain " + (plus ? "plus" : "minus");
+  void el.offsetWidth;
+  el.classList.add("show");
+  clearTimeout(gainT);
+  gainT = setTimeout(() => el.classList.remove("show"), 900);
+}
+
+let toastT = null;
+function toast(text) {
+  const el = $("toast");
+  el.textContent = text;
+  el.classList.remove("show");
+  void el.offsetWidth;
+  el.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove("show"), 900);
+}
+function party(fromEl) {
+  const host = $("party");
+  const r = fromEl.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const chars = ["⭐️", "✨", "🎉", "💫", "🌟"];
+  for (let i = 0; i < 9; i++) {
+    const s = document.createElement("span");
+    s.textContent = pick(chars);
+    s.style.left = cx + "px";
+    s.style.top = cy + "px";
+    s.style.setProperty("--dx", rnd(-120, 120) + "px");
+    s.style.setProperty("--dy", rnd(-170, -60) + "px");
+    s.style.setProperty("--rot", rnd(-220, 220) + "deg");
+    host.appendChild(s);
+    setTimeout(() => s.remove(), 950);
+  }
+}
+
+/* --------------------------- Ende der Runde --------------------------- */
+function endGame() {
+  S.running = false;
+  clearInterval(ticker);
+  if ("speechSynthesis" in window) { try { speechSynthesis.cancel(); } catch (e) {} }
+  sndEnd();
+
+  const key = S.mode === "blitz" ? "high" : "highRuhig";
+  const isBest = S.score > (save[key] || 0);
+  if (isBest) save[key] = S.score;
+  if (S.bestStreak > save.bestStreak) save.bestStreak = S.bestStreak;
+
+  const starsBefore = save.stars;
+  save.stars += S.right;
+  save.plays++;
+  persist();
+
+  const newAnimals = ZOO.filter((z) => starsBefore < z.at && save.stars >= z.at);
+
+  $("endTitle").textContent = isBest ? "Neuer Rekord! 🏆" :
+    S.right >= 15 ? "Stark gespielt! 💪" : "Gut gemacht! 🙂";
+  $("endScore").textContent = S.score;
+  $("endBest").innerHTML = isBest
+    ? '<span class="newbest">Das ist deine neue Bestleistung!</span>'
+    : "Bestleistung: " + (save[key] || 0) + " Punkte";
+  $("endRight").textContent = S.right;
+  $("endWrong").textContent = S.wrong;
+  $("endStreak").textContent = S.bestStreak;
+  $("endLevel").textContent = S.level;
+
+  const bars = Object.keys(S.perGame).map((k) => S.perGame[k])
+    .sort((a, b) => b.ok / b.n - a.ok / a.n);
+  $("endBars").innerHTML = bars.length
+    ? bars.map((g) => {
+        const p = Math.round((g.ok / g.n) * 100);
+        return '<div class="bar"><span class="t">' + g.name + '</span>' +
+               '<span class="track"><span class="fill" style="width:' + p + '%"></span></span>' +
+               '<span class="n">' + g.ok + "/" + g.n + "</span></div>";
+      }).join("")
+    : '<div style="color:var(--ink-dim)">Diesmal keine Aufgabe gelöst – probier es gleich nochmal!</div>';
+
+  const next = ZOO.find((z) => save.stars < z.at);
+  $("endZoo").innerHTML =
+    (newAnimals.length
+      ? '<div style="font-size:1rem;font-weight:900;margin-bottom:6px">Neu freigeschaltet!</div>' +
+        '<div style="font-size:2.6rem">' + newAnimals.map((z) => z.e).join(" ") + "</div>"
+      : "") +
+    '<div style="color:var(--ink-dim);font-weight:700;margin-top:6px">⭐️ ' + save.stars + " Sterne gesammelt" +
+    (next ? " – " + (next.at - save.stars) + " bis zum nächsten Tier " + next.e : " – alle Tiere sind deine! 🎊") +
+    "</div>";
+
+  show("end");
+  paintStart();
+  if (isBest) speak("Neuer Rekord! " + S.score + " Punkte.");
+  else speak("Runde vorbei. " + S.right + " richtig.");
+}
+
+/* --------------------------- Startseite --------------------------- */
+function paintStart() {
+  $("startStats").innerHTML =
+    '<div class="stat"><b>' + (save.high || 0) + "</b><span>Rekord ⚡️</span></div>" +
+    '<div class="stat"><b>' + (save.highRuhig || 0) + "</b><span>Rekord 🌙</span></div>" +
+    '<div class="stat"><b>' + (save.bestStreak || 0) + "</b><span>Serie 🔥</span></div>" +
+    '<div class="stat"><b>' + (save.stars || 0) + "</b><span>Sterne ⭐️</span></div>";
+  $("zoo").innerHTML = ZOO.map((z) =>
+    '<span class="' + (save.stars >= z.at ? "got" : "") + '" title="' + z.at + ' Sterne">' + z.e + "</span>"
+  ).join("");
+  $("tgSound").setAttribute("aria-pressed", String(!!save.sound));
+  $("tgSpeech").setAttribute("aria-pressed", String(!!save.speech));
+}
+
+let chosenMode = "blitz";
+function paintMode() {
+  $("mBlitz").setAttribute("aria-pressed", String(chosenMode === "blitz"));
+  $("mRuhig").setAttribute("aria-pressed", String(chosenMode === "ruhig"));
+}
+
+/* --------------------------- Verdrahtung --------------------------- */
+$("mBlitz").addEventListener("click", () => { chosenMode = "blitz"; paintMode(); });
+$("mRuhig").addEventListener("click", () => { chosenMode = "ruhig"; paintMode(); });
+
+$("tgSound").addEventListener("click", () => {
+  save.sound = !save.sound; persist(); paintStart();
+  if (save.sound) { unlockMedia(); sndRight(); }
+});
+$("tgSpeech").addEventListener("click", () => {
+  save.speech = !save.speech; persist(); paintStart();
+  if (save.speech) { unlockMedia(); speak("Vorlesen ist an."); }
+  else if ("speechSynthesis" in window) { try { speechSynthesis.cancel(); } catch (e) {} }
+});
+
+$("btnStart").addEventListener("click", () => { unlockMedia(); startGame(chosenMode); });
+$("btnAgain").addEventListener("click", () => { unlockMedia(); startGame(chosenMode); });
+$("btnHome").addEventListener("click", () => { paintStart(); paintMode(); show("start"); });
+$("btnQuit").addEventListener("click", () => {
+  if (S.right + S.wrong > 0) { endGame(); }
+  else { S.running = false; clearInterval(ticker); show("start"); }
+});
+
+/* Doppeltipp-Zoom verhindert bereits die Kombination aus
+   "user-scalable=no" und "touch-action: manipulation" – ein eigener
+   touchend-Handler würde nur schnelle Antwort-Tipps verschlucken. */
+
+/* Pause, wenn die App in den Hintergrund geht (Anruf, Homescreen …) */
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    clearInterval(ticker);
+    if ("speechSynthesis" in window) { try { speechSynthesis.cancel(); } catch (e) {} }
+  } else if (S.running && S.mode === "blitz") {
+    lastTick = performance.now();
+    clearInterval(ticker);
+    ticker = setInterval(tick, 100);
+  }
+});
+
+/* Hintergrund-Blasen */
+(function makeBubbles() {
+  const host = $("bubbles");
+  for (let i = 0; i < 14; i++) {
+    const b = document.createElement("i");
+    const size = rnd(16, 74);
+    b.style.width = size + "px";
+    b.style.height = size + "px";
+    b.style.left = rnd(0, 96) + "vw";
+    b.style.animationDuration = rnd(14, 30) + "s";
+    b.style.animationDelay = "-" + rnd(0, 25) + "s";
+    host.appendChild(b);
+  }
+})();
+
+paintStart();
+paintMode();
+</script>
+</body>
+</html>
