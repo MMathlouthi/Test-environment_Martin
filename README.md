@@ -79,22 +79,29 @@ PNG, die Töne werden im Browser synthetisiert. Geprüft mit blockiertem Netzwer
 
 ### C) Web-App mit Vollbild-Icon (nicht privat)
 
-Alles dafür liegt fertig in `docs/`. Nötig sind zwei Einstellungen auf GitHub:
+Alles dafür liegt fertig in `docs/`. Das Repository ist bereits **öffentlich**.
+Es fehlt nur noch, Pages einzuschalten – **eine Seite, drei Auswahlfelder**:
 
-1. **Repo öffentlich schalten:**
-   `https://github.com/MMathlouthi/Test-environment_Martin/settings` öffnen und
-   **bis ganz nach unten scrollen** zur roten **Danger Zone** →
-   *Change repository visibility* → **Change to public**.
-   (Solange das Repo privat ist, verlangt GitHub Pages ein bezahltes Konto.)
-2. **Pages einschalten:**
-   `https://github.com/MMathlouthi/Test-environment_Martin/settings/pages` →
-   *Source:* `Deploy from a branch`, *Branch:* `claude/educational-game-kids-x0xyc3`,
-   *Folder:* **`/docs`** → **Save**.
+Öffne `https://github.com/MMathlouthi/Test-environment_Martin/settings/pages`
 
-Nach ein bis zwei Minuten: **https://mmathlouthi.github.io/Test-environment_Martin/**
+1. Unter **Build and deployment → Source** das Auswahlfeld auf
+   **„Deploy from a branch"** stellen.
+2. Darunter erscheint **Branch**. Im linken Feld (steht auf *None*)
+   **`claude/educational-game-kids-x0xyc3`** wählen.
+3. Im rechten Feld (steht auf */ (root)*) **`/docs`** wählen.
+4. **Save** drücken.
+
+Nach ein bis zwei Minuten ist das Spiel erreichbar:
+**https://mmathlouthi.github.io/Test-environment_Martin/**
+
 In Safari öffnen → **Teilen → Zum Home-Bildschirm**. Ein Service Worker legt alles auf
-dem Gerät ab, danach läuft es auch im Flugmodus. Weitergabe an andere iPhones: einfach
-den Link öffnen.
+dem Gerät ab, danach läuft es auch im Flugmodus. Weitergabe an weitere iPhones: einfach
+den Link öffnen. Jeder künftige Push auf diesen Branch veröffentlicht automatisch neu.
+
+> Ein GitHub-Actions-Workflow wäre der Alternativweg, scheitert hier aber daran, dass
+> das Actions-Token in diesem Repository keine Pages-Seite anlegen darf
+> („Resource not accessible by integration"). Die Einstellung oben braucht kein Actions
+> und ist deshalb der einfachere Weg.
 
 `docs/robots.txt` und ein `noindex` in der Seite halten Suchmaschinen ab, sodass die
 Seite nicht über eine Namenssuche auffindbar ist. Das ist **kein Zugriffsschutz** – wer
