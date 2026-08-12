@@ -199,6 +199,13 @@
   details.info p{margin:9px 0 0; line-height:1.5}
   details.info b{color:#fff}
   details.info ol{margin:8px 0 0; padding-left:1.3em; line-height:1.6}
+  .codebox{
+    width:100%; margin-top:9px; padding:9px; border-radius:12px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:16px; /* 16px verhindert das Hineinzoomen von iOS beim Antippen */
+    border:1.5px solid var(--line); background:rgba(0,0,0,.38); color:var(--ink);
+    -webkit-user-select:text; user-select:text; resize:vertical; line-height:1.4;
+  }
 
   /* ---------- Spielbildschirm ---------- */
   .hud{display:flex; align-items:center; gap:7px; margin-bottom:8px;}
@@ -427,6 +434,16 @@
           <button class="btn ghost" id="btnReset">↺ Alles zurücksetzen</button>
         </div>
         <p id="parentMsg" style="min-height:1.2em"></p>
+        <p><b>Fortschritt sichern oder mitnehmen:</b> Der Code enthält Bestwerte,
+        Bestenlisten, Sterne und das Preis-Konto. Nützlich für ein zweites Gerät – und
+        als Sicherung, falls dieser Browser nichts speichern darf.</p>
+        <div class="row" style="justify-content:flex-start; gap:8px">
+          <button class="btn ghost" id="btnExport">📤 Code erzeugen</button>
+          <button class="btn ghost" id="btnImport">📥 Code übernehmen</button>
+        </div>
+        <textarea id="saveCode" class="codebox" rows="3" spellcheck="false"
+          autocapitalize="off" autocorrect="off" autocomplete="off"
+          placeholder="Hier erscheint der Code – oder einen Code hier einsetzen und „Code übernehmen“ tippen."></textarea>
         <p><b>Auf ein anderes iPhone bringen – zwei Wege:</b></p>
         <p><b>1. Als Web-App mit eigenem Icon:</b> die Web-Adresse des Spiels in Safari
         öffnen, dann <b>Teilen → Zum Home-Bildschirm</b>. Danach startet es im Vollbild
@@ -625,8 +642,9 @@ function loadSave() {
     const raw = store.getItem(SAVE_KEY);
     s = raw ? JSON.parse(raw) : {};
   } catch (e) { s = {}; }
-  const out = {};
-  for (const k in DEFAULT_SAVE) out[k] = DEFAULT_SAVE[k];
+  /* Tiefe Kopie: eine flache Zuweisung würde die verschachtelten Objekte in
+     DEFAULT_SAVE selbst verändern – danach wäre kein Zurücksetzen mehr möglich. */
+  const out = JSON.parse(JSON.stringify(DEFAULT_SAVE));
   for (const k in s) if (Object.prototype.hasOwnProperty.call(DEFAULT_SAVE, k)) out[k] = s[k];
   // verschachtelte Werte absichern
   if (!out.prize || typeof out.prize !== "object") out.prize = { tv: 0, candy: 0 };
@@ -1619,11 +1637,84 @@ twoStep($("btnRedeem"), "🎟️ Preise eingelöst", function () {
 });
 twoStep($("btnReset"), "↺ Alles zurücksetzen", function () {
   const keep = { sound: save.sound, music: save.music, speech: save.speech };
-  save = loadSave();
-  for (const k in DEFAULT_SAVE) save[k] = JSON.parse(JSON.stringify(DEFAULT_SAVE[k]));
+  save = JSON.parse(JSON.stringify(DEFAULT_SAVE));
   save.sound = keep.sound; save.music = keep.music; save.speech = keep.speech;
   persist(); paintStart();
   $("parentMsg").textContent = "Alles zurückgesetzt: Punkte, Bestenlisten, Sticker und Preis-Konto.";
+});
+
+/* --------------- Fortschritt als Code sichern und übernehmen ---------------
+   Lokale Dateien dürfen auf manchen Geräten nichts dauerhaft speichern.
+   Der Code macht den Stand unabhängig davon übertragbar. Der Inhalt besteht
+   nur aus Zahlen, deshalb genügt btoa ohne Umlaut-Behandlung. */
+function exportCode() {
+  const d = {
+    v: 1,
+    h: save.high, r: save.highRuhig, b: save.bestStreak, s: save.stars, p: save.plays,
+    pz: [save.prize.tv, save.prize.candy],
+    pa: [save.prizeAll.tv, save.prizeAll.candy],
+    tb: save.top.blitz.map(function (e) { return e.score; }),
+    tr: save.top.ruhig.map(function (e) { return e.score; })
+  };
+  let b64 = "";
+  try { b64 = btoa(JSON.stringify(d)); } catch (e) { return ""; }
+  return "LZH1." + b64.replace(/=+$/, "");
+}
+function importCode(txt) {
+  const t = String(txt || "").replace(/\s+/g, "");
+  if (t.indexOf("LZH1.") !== 0) return "Der Code muss mit LZH1. beginnen.";
+  let d;
+  try {
+    let b = t.slice(5);
+    while (b.length % 4) b += "=";
+    d = JSON.parse(atob(b));
+  } catch (e) { return "Der Code ist unvollständig oder beschädigt."; }
+  if (!d || typeof d !== "object") return "Der Code ist beschädigt.";
+  if (d.v !== 1) return "Dieser Code passt nicht zu dieser Fassung des Spiels.";
+  const isNum = function (x) { return typeof x === "number" && isFinite(x) && x >= 0; };
+  /* Grundwerte prüfen, damit ein beschädigter Code nicht stillschweigend
+     den ganzen Fortschritt auf Null setzt. */
+  if (!isNum(d.h) || !isNum(d.r) || !isNum(d.s) ||
+      !(d.pz instanceof Array) || !isNum(d.pz[0]) || !isNum(d.pz[1])) {
+    return "Der Code ist beschädigt.";
+  }
+  const num = function (x) {
+    return (typeof x === "number" && isFinite(x) && x >= 0) ? Math.floor(x) : 0;
+  };
+  const list = function (arr) {
+    return (Array.isArray(arr) ? arr : []).slice(0, 5)
+      .map(function (sc) { return { score: num(sc), right: 0, isNew: false }; })
+      .sort(function (a, b) { return b.score - a.score; });
+  };
+  save.high = num(d.h); save.highRuhig = num(d.r); save.bestStreak = num(d.b);
+  save.stars = num(d.s); save.plays = num(d.p);
+  save.prize = { tv: num(d.pz && d.pz[0]), candy: num(d.pz && d.pz[1]) };
+  save.prizeAll = { tv: num(d.pa && d.pa[0]), candy: num(d.pa && d.pa[1]) };
+  save.top = { blitz: list(d.tb), ruhig: list(d.tr) };
+  persist(); paintStart();
+  return null;
+}
+
+$("btnExport").addEventListener("click", function () {
+  const code = exportCode();
+  const box = $("saveCode");
+  if (!code) { $("parentMsg").textContent = "Code konnte nicht erzeugt werden."; return; }
+  box.value = code;
+  try { box.focus(); box.setSelectionRange(0, code.length); } catch (e) {}
+  const fallback = "Code erzeugt. Am besten in Notizen speichern oder per AirDrop schicken.";
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(function () {
+      $("parentMsg").textContent = "Code erzeugt und in die Zwischenablage kopiert.";
+    })["catch"](function () { $("parentMsg").textContent = fallback; });
+  } else {
+    $("parentMsg").textContent = fallback;
+  }
+});
+twoStep($("btnImport"), "📥 Code übernehmen", function () {
+  const err = importCode($("saveCode").value);
+  $("parentMsg").textContent = err
+    ? "Nicht übernommen: " + err
+    : "Übernommen: Bestwerte, Sterne und Preis-Konto stehen jetzt wie im Code.";
 });
 
 /* Pause, wenn die App in den Hintergrund geht (Anruf, Homescreen …) */

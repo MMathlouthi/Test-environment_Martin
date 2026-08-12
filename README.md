@@ -8,67 +8,99 @@ Bestenliste und echten Preisen: **Fernsehminuten und Süßigkeiten-Stücke**.
 Optik und Musik sind eine Hommage an die Popbühne der 80er: schwarze Bühne,
 goldener Fedora, Scheinwerfer, Leuchtboden und ein Funk-Groove mit 117 bpm.
 
-Das ganze Spiel steckt in **einer einzigen Datei**: `layla-zahlenheld.html` (ca. 82 KB).
+Das ganze Spiel steckt in **einer einzigen Datei**: `layla-zahlenheld.html` (ca. 87 KB).
 Kein Server, kein Internet, keine Installation, keine Werbung, kein Tracking.
+Es funktioniert vollständig privat auf dem Gerät – Hosting ist möglich, aber nicht nötig.
 
 ---
 
-## Zwei Wege aufs iPhone
+## Drei Wege aufs iPhone
 
-Es gibt das Spiel in zwei Fassungen. Beide laufen offline, aber nur eine bekommt ein
-Icon auf dem Home-Bildschirm.
+Alle drei laufen **offline**. Sie unterscheiden sich nur darin, wie das Spiel startet
+und ob etwas im Internet liegt.
 
-| | **Web-App** (`docs/`) | **Einzeldatei** (`layla-zahlenheld.html`) |
-|---|---|---|
-| Icon auf dem Home-Bildschirm | ✅ ja | ❌ nein |
-| Vollbild ohne Safari-Leisten | ✅ ja | ❌ nein |
-| Offline spielbar | ✅ nach dem ersten Laden | ✅ sofort |
-| Braucht Internet | einmalig zum Installieren | nie |
-| Weitergabe | Link öffnen | AirDrop |
+| | **A) Kurzbefehl-Icon** | **B) Dateien-App** | **C) Web-App** |
+|---|---|---|---|
+| Icon auf dem Home-Bildschirm | ✅ ja | ❌ nein | ✅ ja |
+| Bleibt komplett privat | ✅ ja | ✅ ja | ❌ öffentlich im Netz |
+| Offline spielbar | ✅ sofort | ✅ sofort | ✅ nach dem ersten Laden |
+| Vollbild ohne Browser-Leisten | teilweise | ❌ nein | ✅ ja |
+| Einrichtung | einmalig 2 Minuten | keine | GitHub-Einstellungen |
 
-> **Warum kein Icon bei der Einzeldatei?** Safari bietet **„Zum Home-Bildschirm" nur für
-> Web-Adressen** an (`http`/`https`), nicht für lokale Dateien (`file://`) – genau wie bei
-> `data:`-Adressen. Das ist eine Einschränkung von iOS, kein Fehler des Spiels.
+> **Warum bietet Safari kein Icon für die Datei an?** „Zum Home-Bildschirm" gibt es nur
+> für **Web-Adressen** (`http`/`https`), nicht für lokale Dateien (`file://`) — dieselbe
+> Einschränkung wie bei `data:`-Adressen. Das ist iOS, kein Fehler des Spiels.
+> Deshalb führt der private Weg zum Icon über die Kurzbefehle-App.
 
-### A) Web-App mit Icon (empfohlen)
+### A) Privat mit Icon, über einen Kurzbefehl (empfohlen)
 
-Einmalige Einrichtung auf GitHub:
+Zuerst die Datei aufs iPhone bringen: `layla-zahlenheld.html` per **AirDrop** senden und
+in **Dateien** an einem festen Ort ablegen, zum Beispiel *Auf meinem iPhone → Downloads*.
 
-1. Repo-Einstellungen → **Settings → General → Danger Zone → Change visibility → Public**.
-2. **Settings → Pages** → *Source:* `Deploy from a branch`,
-   *Branch:* `claude/educational-game-kids-x0xyc3`, *Folder:* `/docs` → **Save**.
-3. Nach ein bis zwei Minuten ist das Spiel erreichbar unter
-   **https://mmathlouthi.github.io/Test-environment_Martin/**
+Dann in der App **Kurzbefehle**:
 
-Danach auf jedem iPhone: Adresse in **Safari** öffnen → **Teilen → Zum Home-Bildschirm**.
-Ab dann startet das Spiel im Vollbild mit Fedora-Icon und läuft **auch im Flugmodus**,
-weil ein Service Worker alles auf dem Gerät behält.
+1. **+** oben rechts → **Aktion hinzufügen**.
+2. Nach **„Datei abrufen"** suchen und hinzufügen. Auf **Datei** tippen und
+   `layla-zahlenheld.html` auswählen. *„Nachfragen"* muss dabei **aus** sein.
+3. Nach **„Vorschau anzeigen"** (Quick Look) suchen und als zweite Aktion hinzufügen.
+4. Oben auf den Namen tippen → **Umbenennen** zu *Zahlenheld*, gern auch
+   **Symbol wählen** (Hut oder Stern).
+5. Wieder oben auf den Namen → **Zum Home-Bildschirm hinzufügen**.
 
-Zum Weitergeben an ein anderes iPhone genügt der Link – kein AirDrop, keine Datei.
+Fertig: ein Icon auf dem Home-Bildschirm, das das Spiel direkt öffnet – ohne Internet,
+ohne dass irgendetwas das Gerät verlässt. Als Icon-Bild kann `docs/icon-180.png`
+verwendet werden (per AirDrop in die Fotos legen und im Kurzbefehl auswählen).
 
-### B) Einzeldatei ganz ohne Internet
+> Weil die Vorschau nicht garantiert dauerhaft speichert, unbedingt den
+> **Sicherungs-Code** nutzen (siehe unten) – dann ist das Preis-Konto abgesichert.
 
-1. `layla-zahlenheld.html` per **AirDrop**, iCloud Drive oder E-Mail aufs iPhone bringen.
-2. In der App **Dateien** antippen. Erscheint nur eine Vorschau: oben rechts
+### B) Privat ohne Einrichtung, über die Dateien-App
+
+1. Datei per **AirDrop**, iCloud Drive oder E-Mail aufs iPhone bringen.
+2. In **Dateien** antippen. Erscheint nur eine Vorschau: oben rechts
    **In Safari öffnen** wählen.
-3. Tipp: In der Dateien-App lange auf die Datei tippen → **Favorit**, dann ist sie
-   in zwei Tipps erreichbar.
+3. Lange auf die Datei tippen → **Favorit**. Dann ist sie in zwei Tipps erreichbar.
 
 Diese Fassung lädt **nichts** aus dem Netz – Formen sind SVG, das Icon ein eingebettetes
 PNG, die Töne werden im Browser synthetisiert. Geprüft mit blockiertem Netzwerk:
 **null externe Anfragen**.
 
-> **Wichtig:** Punkte, Preise und Bestenlisten liegen immer nur auf dem jeweiligen Gerät –
-> und getrennt je Fassung. Beim Wechsel oder Übertragen wandert das Preis-Konto **nicht**
-> mit; dort wird bei Null gestartet.
+### C) Web-App mit Vollbild-Icon (nicht privat)
 
-### Datenschutz-Hinweis zur Web-App
+Alles dafür liegt fertig in `docs/`. Nötig sind zwei Einstellungen auf GitHub:
 
-Mit `Public` ist der Inhalt des Repos – und damit auch der Name im Spiel – **öffentlich
-im Internet lesbar**. Zwei Dinge dämpfen das: `docs/robots.txt` und ein
-`noindex`-Hinweis in der Seite halten Suchmaschinen ab, sodass die Seite nicht über eine
-Namenssuche auffindbar ist. Wer das Test-Repo privat halten will, kann `docs/` alternativ
-in ein eigenes, öffentliches Repo legen und nur dort Pages aktivieren.
+1. **Repo öffentlich schalten:**
+   `https://github.com/MMathlouthi/Test-environment_Martin/settings` öffnen und
+   **bis ganz nach unten scrollen** zur roten **Danger Zone** →
+   *Change repository visibility* → **Change to public**.
+   (Solange das Repo privat ist, verlangt GitHub Pages ein bezahltes Konto.)
+2. **Pages einschalten:**
+   `https://github.com/MMathlouthi/Test-environment_Martin/settings/pages` →
+   *Source:* `Deploy from a branch`, *Branch:* `claude/educational-game-kids-x0xyc3`,
+   *Folder:* **`/docs`** → **Save**.
+
+Nach ein bis zwei Minuten: **https://mmathlouthi.github.io/Test-environment_Martin/**
+In Safari öffnen → **Teilen → Zum Home-Bildschirm**. Ein Service Worker legt alles auf
+dem Gerät ab, danach läuft es auch im Flugmodus. Weitergabe an andere iPhones: einfach
+den Link öffnen.
+
+`docs/robots.txt` und ein `noindex` in der Seite halten Suchmaschinen ab, sodass die
+Seite nicht über eine Namenssuche auffindbar ist. Das ist **kein Zugriffsschutz** – wer
+die Adresse kennt, kann sie öffnen.
+
+## Fortschritt sichern und mitnehmen
+
+Punkte, Preise und Bestenlisten liegen immer nur auf dem jeweiligen Gerät **und getrennt
+je Weg**. Damit nichts verloren geht, gibt es unter **Für Erwachsene** einen Code:
+
+- **📤 Code erzeugen** – schreibt einen kurzen Text wie `LZH1.eyJ2Ijox…` in das Feld und
+  kopiert ihn in die Zwischenablage. In Notizen speichern oder per AirDrop weitergeben.
+- **📥 Code übernehmen** – Code einsetzen, zweimal tippen, fertig: Bestwerte, Sterne und
+  Preis-Konto stehen wieder wie gesichert.
+
+Der Code enthält nur Zahlen (Bestwerte, Sterne, Preis-Konto, Bestenlisten) – keine
+Namen, keine personenbezogenen Daten. Beschädigte oder fremde Codes werden abgelehnt,
+ohne den vorhandenen Stand anzutasten.
 
 ### Geprüfte Geräte
 | Gerät | Status |
